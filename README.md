@@ -65,5 +65,45 @@ Use either `fetch`, `axios`, or `@tanstack/react-query` to perform these operati
 ## Follow Up Questions
 
 - How would you improve your implementation?
+
+I'd do a reafactor to separete the task element from the list of tasks.
+
+I don't have more time to implement the loaders, but I wanted to implement it. So my suggestion is to implement the loaders on the buttons when the user interacts with the API to show a loader when he clicks on create new task, delete a task, send a task forward or back. 
+
+I also suggest Tailwind to deal with the CSS and do the mobile first;
+
 - Try resizing the page. What are some appropriate considerations when adopting the project a mobile app or mobile-friendly web app?
   How would you implement it?
+
+I've implemented a quick solution just for this test adding a flex-wrap to the container, with a gap property and a justify content center.
+
+This solved this problem for this test.
+
+But if the project can become big I suggest use a library such as TailwindCSS to deal with mobile first on the classNames level;
+
+If we cannot use Tailwind on the project, there is some strategies to deal with mobile first usind CSS-in-JS libraries such as Emotion.
+
+
+PS.:
+I've installed a library "react-hot-toast" just to implement a toast to show error for the users, I needed to add this block of code to your `vitest-setup.ts` file just to make it running:
+```
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(), // deprecated
+    removeListener: vi.fn(), // deprecated
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+})
+```
+
+I also took the liberty and deployed this app on Vercel, you can test it on this link:
+[https://interview-react-kanban-board-with-fetching.vercel.app](https://interview-react-kanban-board-with-fetching.vercel.app/)
+
+Hope you enjoy it!
+

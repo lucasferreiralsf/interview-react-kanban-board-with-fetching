@@ -206,7 +206,7 @@ test("Clicking on delete should delete the task in stage 0", async () => {
   const createTaskButton = getByTestId(testIds.createTaskButton);
   const backlogStage = getByTestId(testIds.stages[0]);
 
-  const taskName = "task 1";
+  const taskName = "1";
   const taskId = `${taskName.split(" ").join("-")}-name`;
   const taskDeleteIconId = `${taskName.split(" ").join("-")}-delete`;
 

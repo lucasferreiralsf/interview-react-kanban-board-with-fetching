@@ -1,5 +1,13 @@
-import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import { Task } from "../../models/task";
+import {
+  addNewTask,
+  getAllTasks,
+  removeTask,
+  updateTaskStage,
+} from "../../services";
 import "./index.css";
 
 const stagesNames = ["Backlog", "To Do", "In Progress", "Done"] as const;
@@ -11,7 +19,86 @@ export default function KanbanBoard() {
   // instead of any kind of index or any other attribute.
 
   // Convert this to fetching from `GET /tasks` endpoint
-  const [tasks, setTasks] = useState<Task[]>([]);
+  // const [tasks, setTasks] = useState<Task[]>([]);
+  // const [stagesTasks, setStagesTasks] = useState<Task[][]>(
+  //   stagesNames.map(() => []),
+  // );
+  const queryClient = useQueryClient();
+  const [newTaskValue, setNewTaskValue] = useState("");
+  const { data: tasks } = useQuery({
+    queryKey: ["todos"],
+    queryFn: getAllTasks,
+  });
+
+  const stagesTasks = useMemo(() => {
+    const stages: Task[][] = stagesNames.map(() => []);
+    if (tasks) {
+      for (const task of tasks) {
+        const stageId = task.stage;
+        stages[stageId].push(task);
+      }
+    }
+    return stages;
+  }, [tasks]);
+
+  const addNewTaskMutation = useMutation({
+    mutationFn: addNewTask,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["todos"] });
+      setNewTaskValue("");
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const removeTaskMutation = useMutation({
+    mutationFn: removeTask,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["todos"] });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const updateTaskStageMutation = useMutation({
+    mutationFn: updateTaskStage,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["todos"] });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const handleCreateTask = () => {
+    if (newTaskValue.length > 0) {
+      addNewTaskMutation.mutate({
+        name: newTaskValue,
+        stage: 0,
+      });
+    }
+  };
+
+  const handleSendTaskToNext = ({ name, stage }: Task) => {
+    updateTaskStageMutation.mutate({
+      name,
+      stage:
+        stage < stagesNames.length - 1 ? stage + 1 : stagesNames.length - 1,
+    });
+  };
+
+  const handleSendTaskBack = ({ name, stage }: Task) => {
+    updateTaskStageMutation.mutate({
+      name,
+      stage: stage > 0 ? stage - 1 : 0,
+    });
+  };
+
+  const handleDeleteTask = (name: string) => {
+    removeTaskMutation.mutate(name);
+  };
 
   // Routes:
   // `GET`   `/tasks`; returns `200` with all tasks (`Task[]`)
@@ -19,15 +106,6 @@ export default function KanbanBoard() {
   //          or a `500` with a server-related error message
   // `DELETE` `/tasks/:name`; returns `200`, a `400` with a user-input-related error message,
   //          or a `500` with a server-related error message
-
-  const stagesTasks: Task[][] = [];
-  for (let i = 0; i < stagesNames.length; ++i) {
-    stagesTasks.push([]);
-  }
-  for (const task of tasks) {
-    const stageId = task.stage;
-    stagesTasks[stageId].push(task);
-  }
 
   return (
     <div className="mt-20 layout-column justify-content-center align-items-center">
@@ -38,20 +116,23 @@ export default function KanbanBoard() {
           className="large"
           placeholder="New task name"
           data-testid="create-task-input"
+          value={newTaskValue}
+          onChange={(e) => setNewTaskValue(e.target.value)}
         />
         <button
           type="submit"
           className="ml-30"
           data-testid="create-task-button"
+          onClick={handleCreateTask}
         >
           Create task
         </button>
       </section>
 
-      <div className="mt-50 layout-row">
+      <div className="mt-50 layout-row wrap default-gap justify-content-center">
         {stagesTasks.map((tasks, i) => {
           return (
-            <div className="card outlined ml-20 mt-0" key={`${i}`}>
+            <div className="card outlined mt-0" key={`${i}`}>
               <div className="card-text">
                 <h4>{stagesNames[i]}</h4>
                 <ul className="styled mt-50" data-testid={`stage-${i}`}>
@@ -72,6 +153,8 @@ export default function KanbanBoard() {
                               data-testid={`${task.name
                                 .split(" ")
                                 .join("-")}-back`}
+                              disabled={task.stage === 0}
+                              onClick={() => handleSendTaskBack(task)}
                             >
                               <i className="material-icons">arrow_back</i>
                             </button>
@@ -80,6 +163,8 @@ export default function KanbanBoard() {
                               data-testid={`${task.name
                                 .split(" ")
                                 .join("-")}-forward`}
+                              disabled={task.stage === stagesNames.length - 1}
+                              onClick={() => handleSendTaskToNext(task)}
                             >
                               <i className="material-icons">arrow_forward</i>
                             </button>
@@ -88,6 +173,7 @@ export default function KanbanBoard() {
                               data-testid={`${task.name
                                 .split(" ")
                                 .join("-")}-delete`}
+                              onClick={() => handleDeleteTask(task.name)}
                             >
                               <i className="material-icons">delete</i>
                             </button>

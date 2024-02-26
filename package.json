@@ -12,13 +12,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "material-icons": "^1.13.12",
     "@faker-js/faker": "^8.4.0",
-    "@tanstack/react-query": "^5.18.0",
+    "@tanstack/react-query": "^5.24.1",
     "axios": "^1.6.7",
+    "material-icons": "^1.13.12",
     "msw": "^2.1.5",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-hot-toast": "^2.4.1"
   },
   "devDependencies": {
     "@mswjs/data": "^0.16.1",

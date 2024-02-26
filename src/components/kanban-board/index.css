@@ -20,3 +20,7 @@ ul {
 .li-content {
   height: 25px;
 }
+
+.default-gap {
+  gap: 2rem;
+}
